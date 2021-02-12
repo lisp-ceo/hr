@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func Test_minJumps(t *testing.T) {
@@ -20,73 +18,29 @@ func Test_minJumps(t *testing.T) {
 			args: args{
 				[]int32{0, 0, 1, 0, 0, 1, 0},
 			},
+			want: 4,
+		},
+		{
+			args: args{
+				[]int32{0, 0, 0, 1, 0, 0},
+			},
 			want: 3,
 		},
-	}
-	for n, tt := range tests {
-		t.Run(fmt.Sprint(n), func(t *testing.T) {
-			if got := minJumps(tt.args.clouds); got != tt.want {
-				t.Errorf("minJumps() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_easyGenPath(t *testing.T) {
-	type args struct {
-		spaces         int32
-		max2spaceJumps int32
-	}
-	tests := []struct {
-		name string
-		args args
-		want [][]int32
-	}{
-		//{
-		//	name: "non-recursive: too many 2space jumps for the spaces",
-		//	args: args{
-		//		spaces:   4,
-		//		max2spaceJumps: 3,
-		//	},
-		//	want: [][]int32{
-		//		{1, 1, 1, 1},
-		//	},
-		//},
-		//{
-		//	name: "non-recursive: 0 2space jumps for the spaces",
-		//	args: args{
-		//		spaces:   2,
-		//		max2spaceJumps: 0,
-		//	},
-		//	want: [][]int32{
-		//		{1, 1},
-		//	},
-		//},
-		//{
-		//	name: "non-recursive: 1 2space jump for the 2 spaces",
-		//	args: args{
-		//		spaces:   2,
-		//		max2spaceJumps: 1,
-		//	},
-		//	want: [][]int32{
-		//		{2},
-		//	},
-		//},
 		{
-			name: "recursive: single recursive case",
 			args: args{
-				spaces:         3,
-				max2spaceJumps: 1,
+				[]int32{
+					0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0,
+					0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0,
+				},
 			},
-			want: [][]int32{
-				{2, 1},
-				{1, 2},
-			},
+			want: 28,
 		},
 	}
 	for n, tt := range tests {
 		t.Run(fmt.Sprint(n), func(t *testing.T) {
-			require.Equal(t, tt.want, genPaths(tt.args.max2spaceJumps, tt.args.spaces))
+			if got := jumpingOnClouds(tt.args.clouds); got != tt.want {
+				t.Errorf("jumpingOnClouds() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
@@ -95,6 +49,7 @@ func Test_allPaths(t *testing.T) {
 	type args struct {
 		max2SpaceJumps int32
 		spaces         int32
+		clouds []int32
 	}
 	tests := []struct {
 		name string
@@ -106,6 +61,7 @@ func Test_allPaths(t *testing.T) {
 			args: args{
 				max2SpaceJumps: 1,
 				spaces:         3,
+				clouds: []int32{0,0,0},
 			},
 			want: [][]int32{
 				{2, 1},
@@ -116,40 +72,43 @@ func Test_allPaths(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := allPaths(tt.args.max2SpaceJumps, tt.args.spaces); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("allPaths() = %v, want %v", got, tt.want)
+			if got := validPaths(tt.args.max2SpaceJumps, tt.args.spaces, tt.args.clouds); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("validPaths() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_filterInvalid(t *testing.T) {
+func Test_isSafePath(t *testing.T) {
 	type args struct {
-		paths  [][]int32
+		path  []int32
 		clouds []int32
 	}
 	tests := []struct {
 		name string
 		args args
-		want [][]int32
+		want bool
 	}{
 		{
-			name: "removes invalid paths",
+			name: "safe path",
 			args: args{
-				paths: [][]int32{
-					{1, 1, 1, 1, 1},
-					{1, 1, 1, 2},
-				},
+				path: []int32{1, 1, 1, 2},
 				clouds: []int32{0, 0, 0, 0, 1, 0},
 			},
-			want: [][]int32{
-				{1, 1, 1, 2},
+			want: true,
+		},
+		{
+			name: "unsafe path",
+			args: args{
+				path: []int32{1, 1, 1, 1, 1},
+				clouds: []int32{0, 0, 0, 0, 1, 0},
 			},
+			want: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := filterInvalid(tt.args.paths, tt.args.clouds); !reflect.DeepEqual(got, tt.want) {
+			if got := isSafePath(tt.args.path, tt.args.clouds); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("filterInvalid() = %v, want %v", got, tt.want)
 			}
 		})
